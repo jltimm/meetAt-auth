@@ -1,7 +1,10 @@
 const express = require('express');
 const app = express();
 
-const port = process.env.PORT || 8081;
-app.listen(port);
+if (process.argv.includes('--start')) {
+  const port = process.env.PORT || 8081;
+  console.log('Starting server on port ' + port);
+  app.listen(port);
+}
 
-// TODO...
+module.exports = app;
