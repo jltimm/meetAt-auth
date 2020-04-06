@@ -5,7 +5,7 @@
   "main": "auth.js",
   "scripts": {
     "test": "jest --detectOpenHandles",
-    "start": "node ./src/api/auth.js --start"
+    "start": "node ./src/auth.js --start"
   },
   "repository": {
     "type": "git",
@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/jltimm/meetAt-auth#readme",
   "dependencies": {
+    "body-parser": "^1.19.0",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "pg": "^8.0.0",
