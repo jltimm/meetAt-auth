@@ -9,10 +9,10 @@ module.exports = {createLogin};
  * @return {Promise} If successful or not
  */
 function createLogin(body) {
-  validationService
-      .validateCreateLoginsRequest(body.username, body.password, body.email)
-      .then(() => console.log('Nice!'))
-      .catch((err) => console.log(err));
-  // TODO: create the login
-  return body.username + ' ' + body.password + ' ' + body.email;
+  return new Promise((resolve, reject) => {
+    validationService
+        .validateCreateLoginsRequest(body.username, body.password, body.email)
+        .then(() => resolve({'msg': 'User created successfully'}))
+        .catch((err) => reject(err));
+  });
 }

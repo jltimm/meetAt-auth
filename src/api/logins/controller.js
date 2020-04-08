@@ -12,6 +12,7 @@ module.exports = loginsRouter;
  * @param {JSON} res The response
  */
 function createLogin(req, res) {
-  console.log(req.body);
-  res.send(loginsService.createLogin(req.body));
+  loginsService.createLogin(req.body)
+      .then((msg) => res.send(msg))
+      .catch((err) => res.status(400).send({'msg': err.message}));
 }
