@@ -1,5 +1,5 @@
 const {Pool} = require('pg');
-
+const crypto = require('crypto');
 const request = require('supertest');
 const app = require('../../auth');
 let server;
@@ -23,20 +23,32 @@ beforeEach(async () => {
 describe('No logins exist, login created successfully', () => {
   it('Should return 200 OK', async () => {
     pool.query.mockResolvedValueOnce({rows: [{'count': '0'}], rowCount: 1});
+    pool.query.mockResolvedValue();
+    const username = 'test';
+    const id = crypto.createHash('md5').update(username).digest('hex');
+    const password = 'test';
+    const email = 'test@test.com';
     const res = await global.agent
         .post('/v1/logins/create')
         .send({
-          'username': 'test',
-          'password': 'test',
-          'email': 'test@test.com',
+          'username': username,
+          'password': password,
+          'email': email,
         });
     expect(pool.query)
         .toBeCalledWith(
             'SELECT COUNT(*) FROM logins WHERE username = $1 OR email = $2',
-            ['test', 'test@test.com'],
+            [username, email],
             undefined,
         );
-    expect(pool.query).toBeCalledTimes(1);
+    expect(pool.query)
+        .toBeCalledWith(
+            'INSERT INTO logins(id, username, password, email) ' +
+            'VALUES ($1, $2, $3, $4)',
+            [id, username, password, email],
+            undefined,
+        );
+    expect(pool.query).toBeCalledTimes(2);
     expect(res.statusCode).toEqual(200);
     expect(res.body).toEqual({'msg': 'User created successfully'});
   });
