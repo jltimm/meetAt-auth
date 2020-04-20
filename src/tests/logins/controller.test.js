@@ -124,6 +124,250 @@ describe('Email missing, login not created', () => {
   });
 });
 
+describe('Username and email missing, login attempt failed', () => {
+  it('Should return 400 Bad Request', async () => {
+    const res = await global.agent
+        .post('/v1/logins/login')
+        .send({
+          'password': 'test',
+        });
+    expect(pool.query).toBeCalledTimes(0);
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toEqual({'msg': 'Values missing from request'});
+  });
+});
+
+describe('Password missing, login attempt failed', () => {
+  it('Should return 400 Bad Request', async () => {
+    const res = await global.agent
+        .post('/v1/logins/login')
+        .send({
+          'username': 'test',
+          'email': 'test@test.com',
+        });
+    expect(pool.query).toBeCalledTimes(0);
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toEqual({'msg': 'Values missing from request'});
+  });
+});
+
+describe('Username and email both present, good login attempt', () => {
+  it('Should return 200 OK with id', async () => {
+    const usernameQuery = 'SELECT id FROM logins ' +
+                'WHERE username = $1 ' +
+                'AND password = $2';
+    const username = 'test';
+    const password = 'test';
+    const email = 'test@test.com';
+    const id = '12345';
+    pool.query.mockResolvedValueOnce({rows: [{'id': id}], rowCount: 1});
+    const res = await global.agent
+        .post('/v1/logins/login')
+        .send({
+          'username': username,
+          'password': password,
+          'email': email,
+        });
+    expect(pool.query)
+        .toBeCalledWith(usernameQuery, [username, password], undefined);
+    expect(pool.query).toBeCalledTimes(1);
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toEqual({'id': id});
+  });
+});
+
+describe('Username and email both present, bad login attempt', () => {
+  it('Should return 400 Bad Request with Invalid Credentials msg', async () => {
+    const usernameQuery = 'SELECT id FROM logins ' +
+                'WHERE username = $1 ' +
+                'AND password = $2';
+    const username = 'test';
+    const password = 'test';
+    const email = 'test@test.com';
+    pool.query.mockResolvedValueOnce({rows: [], rowCount: 0});
+    const res = await global.agent
+        .post('/v1/logins/login')
+        .send({
+          'username': username,
+          'password': password,
+          'email': email,
+        });
+    expect(pool.query)
+        .toBeCalledWith(usernameQuery, [username, password], undefined);
+    expect(pool.query).toBeCalledTimes(1);
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toEqual({'msg': 'Invalid credentials'});
+  });
+});
+
+describe('Username/email both present, >1 rows returned, bad attempt', () => {
+  it('Should return 400 Bad Request with Invalid Credentials msg', async () => {
+    const usernameQuery = 'SELECT id FROM logins ' +
+                'WHERE username = $1 ' +
+                'AND password = $2';
+    const username = 'test';
+    const password = 'test';
+    const email = 'test@test.com';
+    pool.query.mockResolvedValueOnce(
+        {rows: [{'id': '1234'}, {'id': '1111'}],
+          rowCount: 2,
+        });
+    const res = await global.agent
+        .post('/v1/logins/login')
+        .send({
+          'username': username,
+          'password': password,
+          'email': email,
+        });
+    expect(pool.query)
+        .toBeCalledWith(usernameQuery, [username, password], undefined);
+    expect(pool.query).toBeCalledTimes(1);
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toEqual({'msg': 'Invalid credentials'});
+  });
+});
+
+describe('Only username present, good login attempt', () => {
+  it('Should return 200 OK with id', async () => {
+    const usernameQuery = 'SELECT id FROM logins ' +
+                'WHERE username = $1 ' +
+                'AND password = $2';
+    const username = 'test';
+    const password = 'test';
+    const id = '12345';
+    pool.query.mockResolvedValueOnce({rows: [{'id': id}], rowCount: 1});
+    const res = await global.agent
+        .post('/v1/logins/login')
+        .send({
+          'username': username,
+          'password': password,
+        });
+    expect(pool.query)
+        .toBeCalledWith(usernameQuery, [username, password], undefined);
+    expect(pool.query).toBeCalledTimes(1);
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toEqual({'id': id});
+  });
+});
+
+describe('Only username present, bad login attempt', () => {
+  it('Should return 400 Bad Request with Invalid Credentials msg', async () => {
+    const usernameQuery = 'SELECT id FROM logins ' +
+                'WHERE username = $1 ' +
+                'AND password = $2';
+    const username = 'test';
+    const password = 'test';
+    pool.query.mockResolvedValueOnce({rows: [], rowCount: 0});
+    const res = await global.agent
+        .post('/v1/logins/login')
+        .send({
+          'username': username,
+          'password': password,
+        });
+    expect(pool.query)
+        .toBeCalledWith(usernameQuery, [username, password], undefined);
+    expect(pool.query).toBeCalledTimes(1);
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toEqual({'msg': 'Invalid credentials'});
+  });
+});
+
+describe('Only username present, >1 rows returned, bad login attempt', () => {
+  it('Should return 400 Bad Request with Invalid Credentials msg', async () => {
+    const usernameQuery = 'SELECT id FROM logins ' +
+                'WHERE username = $1 ' +
+                'AND password = $2';
+    const username = 'test';
+    const password = 'test';
+    pool.query.mockResolvedValueOnce(
+        {rows: [{'id': '1234'}, {'id': '1111'}],
+          rowCount: 2,
+        });
+    const res = await global.agent
+        .post('/v1/logins/login')
+        .send({
+          'username': username,
+          'password': password,
+        });
+    expect(pool.query)
+        .toBeCalledWith(usernameQuery, [username, password], undefined);
+    expect(pool.query).toBeCalledTimes(1);
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toEqual({'msg': 'Invalid credentials'});
+  });
+});
+
+describe('Only email present, good login attempt', () => {
+  it('Should return 200 OK with id', async () => {
+    const emailQuery = 'SELECT id FROM logins ' +
+                       'WHERE email = $1 ' +
+                       'AND password = $2';
+    const email = 'test@test.com';
+    const password = 'test';
+    const id = '12345';
+    pool.query.mockResolvedValueOnce({rows: [{'id': id}], rowCount: 1});
+    const res = await global.agent
+        .post('/v1/logins/login')
+        .send({
+          'email': email,
+          'password': password,
+        });
+    expect(pool.query)
+        .toBeCalledWith(emailQuery, [email, password], undefined);
+    expect(pool.query).toBeCalledTimes(1);
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toEqual({'id': id});
+  });
+});
+
+describe('Only email present, bad login attempt', () => {
+  it('Should return 400 Bad Request with Invalid Credentials msg', async () => {
+    const emailQuery = 'SELECT id FROM logins ' +
+                       'WHERE email = $1 ' +
+                       'AND password = $2';
+    const email = 'test@test.com';
+    const password = 'test';
+    pool.query.mockResolvedValueOnce({rows: [], rowCount: 0});
+    const res = await global.agent
+        .post('/v1/logins/login')
+        .send({
+          'email': email,
+          'password': password,
+        });
+    expect(pool.query)
+        .toBeCalledWith(emailQuery, [email, password], undefined);
+    expect(pool.query).toBeCalledTimes(1);
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toEqual({'msg': 'Invalid credentials'});
+  });
+});
+
+describe('Only email present, >1 rows returned, bad login attempt', () => {
+  it('Should return 400 Bad Request with Invalid Credentials msg', async () => {
+    const emailQuery = 'SELECT id FROM logins ' +
+                       'WHERE email = $1 ' +
+                       'AND password = $2';
+    const email = 'test@test.com';
+    const password = 'test';
+    pool.query.mockResolvedValueOnce(
+        {rows: [{'id': '1234'}, {'id': '1111'}],
+          rowCount: 2,
+        });
+    const res = await global.agent
+        .post('/v1/logins/login')
+        .send({
+          'email': email,
+          'password': password,
+        });
+    expect(pool.query)
+        .toBeCalledWith(emailQuery, [email, password], undefined);
+    expect(pool.query).toBeCalledTimes(1);
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toEqual({'msg': 'Invalid credentials'});
+  });
+});
+
+
 afterEach(async () => {
   await server.close();
   jest.clearAllMocks();

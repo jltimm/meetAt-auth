@@ -1,6 +1,6 @@
 const db = require('../../db');
 
-module.exports = {validateCreateLoginsRequest};
+module.exports = {validateCreateLoginsRequest, validateLoginRequest};
 
 /**
  * Validates the request
@@ -23,6 +23,19 @@ function validateCreateLoginsRequest(username, password, email) {
           .catch((err) => reject(err));
     }
   });
+}
+
+/**
+ * Checks the presence of the required params.
+ * Username or email must be present, and password must be present.
+ *
+ * @param {String} username The username
+ * @param {String} password The password
+ * @param {String} email The email
+ * @return {Boolean} If the request is okay or not
+ */
+function validateLoginRequest(username, password, email) {
+  return ((!!username || !!email) && !!password);
 }
 
 /**
