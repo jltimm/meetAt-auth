@@ -4,7 +4,7 @@ const app = express();
 const bodyParser = require('body-parser');
 
 app.use(bodyParser.json());
-app.use('/v1/logins', require('./api/logins/controller'));
+app.use('/v1/auth', require('./api/auth/controller'));
 
 if (process.argv.includes('--start')) {
   const port = process.env.PORT;
