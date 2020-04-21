@@ -29,7 +29,7 @@ describe('No logins exist, login created successfully', () => {
     const password = 'test';
     const email = 'test@test.com';
     const res = await global.agent
-        .post('/v1/logins/create')
+        .post('/v1/auth/create')
         .send({
           'username': username,
           'password': password,
@@ -58,7 +58,7 @@ describe('Username or email exists, login not created', () => {
   it('Should return 400 Bad Request', async () => {
     pool.query.mockResolvedValueOnce({rows: [{'count': '1'}], rowCount: 1});
     const res = await global.agent
-        .post('/v1/logins/create')
+        .post('/v1/auth/create')
         .send({
           'username': 'test',
           'password': 'test',
@@ -79,7 +79,7 @@ describe('Username or email exists, login not created', () => {
 describe('Username missing, login not created', () => {
   it('Should return 400 Bad Request', async () => {
     const res = await global.agent
-        .post('/v1/logins/create')
+        .post('/v1/auth/create')
         .send({
           'password': 'test',
           'email': 'test@test.com',
@@ -95,7 +95,7 @@ describe('Username missing, login not created', () => {
 describe('Password missing, login not created', () => {
   it('Should return 400 Bad Request', async () => {
     const res = await global.agent
-        .post('/v1/logins/create')
+        .post('/v1/auth/create')
         .send({
           'username': 'test',
           'email': 'test@test.com',
@@ -111,7 +111,7 @@ describe('Password missing, login not created', () => {
 describe('Email missing, login not created', () => {
   it('Should return 400 Bad Request', async () => {
     const res = await global.agent
-        .post('/v1/logins/create')
+        .post('/v1/auth/create')
         .send({
           'username': 'test',
           'password': 'test',
@@ -127,7 +127,7 @@ describe('Email missing, login not created', () => {
 describe('Username and email missing, login attempt failed', () => {
   it('Should return 400 Bad Request', async () => {
     const res = await global.agent
-        .post('/v1/logins/login')
+        .post('/v1/auth/login')
         .send({
           'password': 'test',
         });
@@ -140,7 +140,7 @@ describe('Username and email missing, login attempt failed', () => {
 describe('Password missing, login attempt failed', () => {
   it('Should return 400 Bad Request', async () => {
     const res = await global.agent
-        .post('/v1/logins/login')
+        .post('/v1/auth/login')
         .send({
           'username': 'test',
           'email': 'test@test.com',
@@ -162,7 +162,7 @@ describe('Username and email both present, good login attempt', () => {
     const id = '12345';
     pool.query.mockResolvedValueOnce({rows: [{'id': id}], rowCount: 1});
     const res = await global.agent
-        .post('/v1/logins/login')
+        .post('/v1/auth/login')
         .send({
           'username': username,
           'password': password,
@@ -186,7 +186,7 @@ describe('Username and email both present, bad login attempt', () => {
     const email = 'test@test.com';
     pool.query.mockResolvedValueOnce({rows: [], rowCount: 0});
     const res = await global.agent
-        .post('/v1/logins/login')
+        .post('/v1/auth/login')
         .send({
           'username': username,
           'password': password,
@@ -213,7 +213,7 @@ describe('Username/email both present, >1 rows returned, bad attempt', () => {
           rowCount: 2,
         });
     const res = await global.agent
-        .post('/v1/logins/login')
+        .post('/v1/auth/login')
         .send({
           'username': username,
           'password': password,
@@ -237,7 +237,7 @@ describe('Only username present, good login attempt', () => {
     const id = '12345';
     pool.query.mockResolvedValueOnce({rows: [{'id': id}], rowCount: 1});
     const res = await global.agent
-        .post('/v1/logins/login')
+        .post('/v1/auth/login')
         .send({
           'username': username,
           'password': password,
@@ -259,7 +259,7 @@ describe('Only username present, bad login attempt', () => {
     const password = 'test';
     pool.query.mockResolvedValueOnce({rows: [], rowCount: 0});
     const res = await global.agent
-        .post('/v1/logins/login')
+        .post('/v1/auth/login')
         .send({
           'username': username,
           'password': password,
@@ -284,7 +284,7 @@ describe('Only username present, >1 rows returned, bad login attempt', () => {
           rowCount: 2,
         });
     const res = await global.agent
-        .post('/v1/logins/login')
+        .post('/v1/auth/login')
         .send({
           'username': username,
           'password': password,
@@ -307,7 +307,7 @@ describe('Only email present, good login attempt', () => {
     const id = '12345';
     pool.query.mockResolvedValueOnce({rows: [{'id': id}], rowCount: 1});
     const res = await global.agent
-        .post('/v1/logins/login')
+        .post('/v1/auth/login')
         .send({
           'email': email,
           'password': password,
@@ -329,7 +329,7 @@ describe('Only email present, bad login attempt', () => {
     const password = 'test';
     pool.query.mockResolvedValueOnce({rows: [], rowCount: 0});
     const res = await global.agent
-        .post('/v1/logins/login')
+        .post('/v1/auth/login')
         .send({
           'email': email,
           'password': password,
@@ -354,7 +354,7 @@ describe('Only email present, >1 rows returned, bad login attempt', () => {
           rowCount: 2,
         });
     const res = await global.agent
-        .post('/v1/logins/login')
+        .post('/v1/auth/login')
         .send({
           'email': email,
           'password': password,
