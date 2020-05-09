@@ -1,6 +1,8 @@
-const db = require('../../db');
-
-module.exports = {validateCreateLoginsRequest, validateLoginRequest};
+module.exports = {
+  validateCreateLoginsRequest,
+  validateLoginRequest,
+  parseError,
+};
 
 /**
  * Validates the request
@@ -11,18 +13,7 @@ module.exports = {validateCreateLoginsRequest, validateLoginRequest};
  * @return {Promise} The promise
  */
 function validateCreateLoginsRequest(username, password, email) {
-  return new Promise((resolve, reject) => {
-    if (!username || !password || !email) {
-      reject(new Error('The username, password, or email is missing'));
-    } else {
-      doesLoginExist(username, email)
-          .then((loginExists) =>
-              loginExists ?
-                reject(new Error('Login information already exists')) :
-                resolve())
-          .catch((err) => reject(err));
-    }
-  });
+  return (!username || !password || !email) ? false : true;
 }
 
 /**
@@ -39,19 +30,17 @@ function validateLoginRequest(username, password, email) {
 }
 
 /**
- * Checks if a login exists in the database by checking if the
- * username exists or if the email exists
+ * Parses the postgres error
  *
- * @param {String} username The username to check
- * @param {String} email The email to check
- * @return {Promise} The promise
+ * @param {JSON} error The error
+ * @return {Error} The error, without exposing too much
  */
-function doesLoginExist(username, email) {
-  return new Promise((resolve, reject) => {
-    db.query('SELECT COUNT(*) FROM logins ' +
-             'WHERE username = $1 ' +
-             'OR email = $2', [username, email])
-        .then((res) => resolve(res.rows[0].count !== '0'))
-        .catch((err) => reject(err));
-  });
+function parseError(error) {
+  if (error.message.includes('logins_pkey')) {
+    return new Error('Username already exists');
+  }
+  if (error.message.includes('logins_email_key')) {
+    return new Error('Email already exists');
+  }
+  return new Error('Error creating login');
 }

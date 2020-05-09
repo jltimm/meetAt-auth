@@ -36,14 +36,15 @@ function createLogin(body) {
   const password = body.password;
   const email = body.email;
   return new Promise((resolve, reject) => {
-    validationService
-        .validateCreateLoginsRequest(username, password, email)
-        .then(() => {
-          insertLogin(username, password, email)
-              .then(() => resolve({'msg': 'User created successfully'}))
-              .catch((err) => reject(err));
-        })
-        .catch((err) => reject(err));
+    if (
+      validationService.validateCreateLoginsRequest(username, password, email)
+    ) {
+      insertLogin(username, password, email)
+          .then(() => resolve({'msg': 'User created successfully'}))
+          .catch((err) => reject(validationService.parseError(err)));
+    } else {
+      reject(new Error('The username, password, or email is missing'));
+    }
   });
 }
 

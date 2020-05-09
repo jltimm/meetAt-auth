@@ -22,7 +22,6 @@ beforeEach(async () => {
 
 describe('No logins exist, login created successfully', () => {
   it('Should return 200 OK', async () => {
-    pool.query.mockResolvedValueOnce({rows: [{'count': '0'}], rowCount: 1});
     pool.query.mockResolvedValue();
     const username = 'test';
     const id = crypto.createHash('md5').update(username).digest('hex');
@@ -37,10 +36,36 @@ describe('No logins exist, login created successfully', () => {
         });
     expect(pool.query)
         .toBeCalledWith(
-            'SELECT COUNT(*) FROM logins WHERE username = $1 OR email = $2',
-            [username, email],
+            'INSERT INTO logins(id, username, password, email) ' +
+            'VALUES ($1, $2, $3, $4)',
+            [id, username, password, email],
             undefined,
         );
+    expect(pool.query).toBeCalledTimes(1);
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toEqual({'msg': 'User created successfully'});
+  });
+});
+
+describe('Username exists, login not created', () => {
+  it('Should return 400 Bad Request', async () => {
+    pool.query
+        .mockRejectedValueOnce(
+            new Error(
+                'duplicate key value violates unique constraint "logins_pkey"',
+            ),
+        );
+    const username = 'test';
+    const id = crypto.createHash('md5').update(username).digest('hex');
+    const password = 'test';
+    const email = 'test@test.com';
+    const res = await global.agent
+        .post('/v1/auth/create')
+        .send({
+          'username': username,
+          'password': password,
+          'email': email,
+        });
     expect(pool.query)
         .toBeCalledWith(
             'INSERT INTO logins(id, username, password, email) ' +
@@ -48,31 +73,74 @@ describe('No logins exist, login created successfully', () => {
             [id, username, password, email],
             undefined,
         );
-    expect(pool.query).toBeCalledTimes(2);
-    expect(res.statusCode).toEqual(200);
-    expect(res.body).toEqual({'msg': 'User created successfully'});
+    expect(pool.query).toBeCalledTimes(1);
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toEqual({'msg': 'Username already exists'});
   });
 });
 
-describe('Username or email exists, login not created', () => {
+describe('Email exists, login not created', () => {
   it('Should return 400 Bad Request', async () => {
-    pool.query.mockResolvedValueOnce({rows: [{'count': '1'}], rowCount: 1});
+    pool.query
+        .mockRejectedValueOnce(
+            new Error(
+                'duplicate key value violates unique constraint ' +
+                '"logins_email_key"',
+            ),
+        );
+    const username = 'test';
+    const id = crypto.createHash('md5').update(username).digest('hex');
+    const password = 'test';
+    const email = 'test@test.com';
     const res = await global.agent
         .post('/v1/auth/create')
         .send({
-          'username': 'test',
-          'password': 'test',
-          'email': 'test@test.com',
+          'username': username,
+          'password': password,
+          'email': email,
         });
     expect(pool.query)
         .toBeCalledWith(
-            'SELECT COUNT(*) FROM logins WHERE username = $1 OR email = $2',
-            ['test', 'test@test.com'],
+            'INSERT INTO logins(id, username, password, email) ' +
+            'VALUES ($1, $2, $3, $4)',
+            [id, username, password, email],
             undefined,
         );
     expect(pool.query).toBeCalledTimes(1);
     expect(res.statusCode).toEqual(400);
-    expect(res.body).toEqual({'msg': 'Login information already exists'});
+    expect(res.body).toEqual({'msg': 'Email already exists'});
+  });
+});
+
+describe('Misc error, login not created', () => {
+  it('Should return 400 Bad Request', async () => {
+    pool.query
+        .mockRejectedValueOnce(
+            new Error(
+                'something went wrong',
+            ),
+        );
+    const username = 'test';
+    const id = crypto.createHash('md5').update(username).digest('hex');
+    const password = 'test';
+    const email = 'test@test.com';
+    const res = await global.agent
+        .post('/v1/auth/create')
+        .send({
+          'username': username,
+          'password': password,
+          'email': email,
+        });
+    expect(pool.query)
+        .toBeCalledWith(
+            'INSERT INTO logins(id, username, password, email) ' +
+            'VALUES ($1, $2, $3, $4)',
+            [id, username, password, email],
+            undefined,
+        );
+    expect(pool.query).toBeCalledTimes(1);
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toEqual({'msg': 'Error creating login'});
   });
 });
 
