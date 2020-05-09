@@ -13,7 +13,7 @@ module.exports = {
  * @return {Promise} The promise
  */
 function validateCreateLoginsRequest(username, password, email) {
-  return (!username || !password || !email) ? false : true;
+  return !!username && !!password && !!email;
 }
 
 /**
